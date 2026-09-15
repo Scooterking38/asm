@@ -1,31 +1,38 @@
 import os
 import pyghidra
 
-# 1. Initialize PyGhidra JVM FIRST before any ghidra imports
+# 1. Initialize PyGhidra JVM FIRST
 pyghidra.start()
 
-# 2. Import Ghidra modules AFTER the JVM has started
+# 2. Import Ghidra modules after JVM startup
 from ghidra.app.decompiler import DecompInterface
+from ghidra.app.plugin.core.analysis import AutoAnalysisManager
+from ghidra.util.task import TaskMonitor
 
 binary_path = "check_age_bin"
 output_path = "decompiled_output.c"
 
-print(f"[-] Loading and analyzing {binary_path}...")
+print(f"[-] Loading and analyzing {binary_path} from scratch...")
 
 c_code_collection = []
 
-# 3. Load the binary using the modern program_loader API
+# 3. Load the binary container
 load_results = pyghidra.program_loader().source(binary_path).load()
 
 program = None
 for obj in load_results:
-    # Extract the actual Ghidra Program (DomainObject) instance
     program = obj.getDomainObject()
     break
 
 if not program:
     raise RuntimeError("Failed to load program from binary.")
 
+# 4. Force Ghidra to run deep Auto-Analysis with no prior knowledge
+print("[-] Running Ghidra auto-analysis engine...")
+analysis_manager = AutoAnalysisManager.getAnalysisManager(program)
+analysis_manager.analyzeAll(TaskMonitor.DUMMY)
+
+# 5. Decompile all discovered functions
 decompiler = DecompInterface()
 decompiler.openProgram(program)
 
@@ -51,4 +58,4 @@ decompiler.dispose()
 with open(output_path, "w") as f:
     f.writelines(c_code_collection)
 
-print("[+] Decompilation complete and saved to", output_path)
+print("[+] Independent decompilation complete and saved to", output_path)
