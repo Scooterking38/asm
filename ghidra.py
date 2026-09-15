@@ -1,15 +1,16 @@
 import os
 import pyghidra
 
-# Set Ghidra install directory from environment variable
+# Initialize PyGhidra JVM
 pyghidra.start()
 
-binary_path = "check_age_bin"  # Name of the compiled binary
+binary_path = "check_age_bin"
 output_path = "decompiled_output.c"
 
 print(f"[-] Loading and analyzing {binary_path}...")
 
-with pyghidra.program_loader(binary_path) as flat_api:
+# Fix: Use the correct builder pattern (.source().load()) for program_loader
+with pyghidra.program_loader().source(binary_path).load() as flat_api:
     program = flat_api.getCurrentProgram()
     
     from ghidra.app.decompiler import DecompInterface
