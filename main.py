@@ -17,7 +17,7 @@ c_code_collection = []
 # Use pyghidra's context manager to safely open and handle the program
 with pyghidra.open_program(binary_path) as program:
     decompiler = DecompInterface()
-    decompiler.openProgram(program)
+    decompiler.openProgram(program.getCurrentProgram())
 
     function_manager = program.getFunctionManager()
     functions = function_manager.getFunctions(True)
