@@ -1,9 +1,11 @@
 import os
 import pyghidra
-from ghidra.app.decompiler import DecompInterface
 
-# Initialize PyGhidra JVM
+# 1. Initialize PyGhidra JVM FIRST before any ghidra imports
 pyghidra.start()
+
+# 2. Import Ghidra modules AFTER the JVM has started
+from ghidra.app.decompiler import DecompInterface
 
 binary_path = "check_age_bin"
 output_path = "decompiled_output.c"
