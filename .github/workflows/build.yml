@@ -12,24 +12,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Install NASM
+        shell: powershell
         run: choco install nasm -y
 
-      - name: Assemble BIN
-        run: nasm -f bin code.asm -o code.bin
-
-      - name: Assemble EXE object
-        run: nasm -f win64 program.asm -o program.obj
-
-      - name: Link EXE
+      - name: Assemble
         shell: cmd
-        run: |
-          gcc program.obj -o program.exe -nostdlib -lkernel32 -Wl,--subsystem,console
+        run: nasm -f win64 asm.asm -o asm.obj
 
-      - name: Upload artifacts
+      - name: Build DLL
+        shell: cmd
+        run: link /DLL /NOENTRY /DEF:asm.def /OUT:asm.dll asm.obj
+
+      - name: Upload DLL
         uses: actions/upload-artifact@v4
         with:
-          name: windows-build
-          path: |
-            code.bin
-            program.exe
+          name: windows-dll
+          path: asm.dll
