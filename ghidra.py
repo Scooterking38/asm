@@ -9,12 +9,17 @@ output_path = "decompiled_output.c"
 
 print(f"[-] Loading and analyzing {binary_path}...")
 
-# Load the binary using the builder pattern and get the loaded program
+# 1. Load the binary results container
 load_results = pyghidra.program_loader().source(binary_path).load()
 
-# Depending on the pyghidra version, retrieve the program object safely:
-# If load_results acts as a context manager yielding the flat API or domain object:
-program = load_results.getProgram() if hasattr(load_results, "getProgram") else load_results
+# 2. Extract the actual Program object from the LoadResults iterable container
+program = None
+for obj in load_results:
+    program = obj
+    break
+
+if not program:
+    raise RuntimeError("Failed to load program from binary.")
 
 from ghidra.app.decompiler import DecompInterface
 
