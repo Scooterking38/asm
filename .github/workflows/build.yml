@@ -1,0 +1,28 @@
+name: Build Assembly
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install NASM
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nasm
+
+      - name: Assemble
+        run: |
+          nasm -f bin code.asm -o code.bin
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: assembly-binary
+          path: code.bin
