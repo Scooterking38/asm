@@ -27,10 +27,12 @@ for obj in load_results:
 if not program:
     raise RuntimeError("Failed to load program from binary.")
 
-# 4. Force Ghidra to run deep Auto-Analysis with no prior knowledge
+# 4. Correctly invoke Ghidra auto-analysis engine
 print("[-] Running Ghidra auto-analysis engine...")
 analysis_manager = AutoAnalysisManager.getAnalysisManager(program)
-analysis_manager.analyzeAll(TaskMonitor.DUMMY)
+analysis_manager.initializeOptions()
+analysis_manager.reAnalyzeAll(None)
+analysis_manager.startAnalysis(TaskMonitor.DUMMY)
 
 # 5. Decompile all discovered functions
 decompiler = DecompInterface()
