@@ -1,4 +1,4 @@
-name: Build Assembly
+name: Build
 
 on:
   push:
@@ -6,23 +6,30 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Install NASM
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y nasm
+        run: choco install nasm -y
 
-      - name: Assemble
-        run: |
-          nasm -f bin code.asm -o code.bin
+      - name: Assemble BIN
+        run: nasm -f bin code.asm -o code.bin
 
-      - name: Upload binary
+      - name: Assemble EXE object
+        run: nasm -f win64 program.asm -o program.obj
+
+      - name: Link EXE
+        shell: cmd
+        run: |
+          gcc program.obj -o program.exe -nostdlib -lkernel32 -Wl,--subsystem,console
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: assembly-binary
-          path: code.bin
+          name: windows-build
+          path: |
+            code.bin
+            program.exe
