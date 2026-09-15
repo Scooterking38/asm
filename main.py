@@ -14,28 +14,38 @@ print(f"[-] Loading and analyzing {binary_path}...")
 
 c_code_collection = []
 
-# Use pyghidra's context manager to safely open and handle the program
-with pyghidra.open_program(binary_path) as program:
-    decompiler = DecompInterface()
-    decompiler.openProgram(program.getCurrentProgram())
+# 3. Load the binary using the modern program_loader API
+load_results = pyghidra.program_loader().source(binary_path).load()
 
-    function_manager = program.getFunctionManager()
-    functions = function_manager.getFunctions(True)
+program = None
+for obj in load_results:
+    # Extract the actual Ghidra Program (DomainObject) instance
+    program = obj.getDomainObject()
+    break
 
-    for func in functions:
-        func_name = func.getName()
-        entry_point = func.getEntryPoint()
+if not program:
+    raise RuntimeError("Failed to load program from binary.")
+
+decompiler = DecompInterface()
+decompiler.openProgram(program)
+
+function_manager = program.getFunctionManager()
+functions = function_manager.getFunctions(True)
+
+for func in functions:
+    func_name = func.getName()
+    entry_point = func.getEntryPoint()
+    
+    header = f"// Function: {func_name} at {entry_point}\n"
+    res = decompiler.decompileFunction(func, 30, None)
+    
+    if res and res.decompileCompleted():
+        code = res.getDecompiledFunction().getC()
+        c_code_collection.append(header + code + "\n\n")
+    else:
+        c_code_collection.append(header + "// Error: Could not decompile\n\n")
         
-        header = f"// Function: {func_name} at {entry_point}\n"
-        res = decompiler.decompileFunction(func, 30, None)
-        
-        if res and res.decompileCompleted():
-            code = res.getDecompiledFunction().getC()
-            c_code_collection.append(header + code + "\n\n")
-        else:
-            c_code_collection.append(header + "// Error: Could not decompile\n\n")
-            
-    decompiler.dispose()
+decompiler.dispose()
 
 # Save output to a file for GitHub artifacts
 with open(output_path, "w") as f:
